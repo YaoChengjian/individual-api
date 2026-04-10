@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.log
+
+# Poetry / pipenv
+poetry.lock
+Pipfile.lock
+
+# Virtual env
+venv/
+env/
+.venv/
+.rag_env/
+.idea/
+.vscode/
+
+# Env 配置（保留示例）
+.env
+
+# macOS/Linux/Windows
+.DS_Store
+Thumbs.db
+
+# Aerich 迁移缓存（可选）
+.aerich/
+
+# Static 文件缓存（如上传图片）
+static/upload/*
+static/fail_excel/*
+
+# Logs
+logs/
+*.log
+
+# Docker
+__docker_build__/
+*.tar
+
+
+# VSCode 工作区配置
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+
+# celery一些调试日志文件
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir
+
+调整文档说明/

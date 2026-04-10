@@ -1,0 +1,49 @@
+services:
+
+  fishery-redis:
+    restart: always
+    image: redis:latest
+    container_name: fishery-redis
+
+  fishery-api:
+    build: .
+    restart: always
+    container_name: fishery-api
+    working_dir: ${DK_CONT_PROJECT_PATH}
+    command: [ "/bin/bash", "${DK_CONT_START_SH}" ]
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Shanghai
+      # 显式指定验证码字体路径，确保容器环境稳定命中大号字体
+      CAPTCHA_FONT_PATH: /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf
+      # 验证码字号微调（仅调整文字大小，不影响图片尺寸）
+      CAPTCHA_FONT_SIZE: "32"
+    volumes:
+      - ${DK_PROJECT_PATH}:${DK_CONT_PROJECT_PATH}
+      - ${DK_UPLOAD_PATH}:${DK_CONT_UPLOAD_PATH}
+      - ${DK_LOG_PATH}:${LOG_PATH}
+    depends_on:
+      - fishery-redis
+
+  fishery-nginx:
+    image: nginx:latest
+    container_name: fishery-nginx
+    restart: always
+    ports:
+      - "${DK_NGINX_PORT}:${DK_NGINX_CONCENT_PORT}"
+      - "${DK_NGINX_ADMIN_PORT}:50080"
+    volumes:
+      # 原有挂载保持不变，只追加下面一行
+      - /etc/nginx/ssl:/etc/nginx/ssl:ro
+     # Nginx 主配置
+      - ${DK_PROJECT_PATH}${DK_NGINX_CONF_PATH}:/etc/nginx/nginx.conf
+      # 静态文件（上传目录）
+      - ${DK_UPLOAD_PATH}:/static
+      # 前端项目（Vue 编译后的 dist 目录）
+      - ${DK_FRONT_ADMIN_PATH}/dist:/usr/share/nginx/html/admin/dist
+      - ${DK_FRONT_PORTAL_PATH}/dist:/usr/share/nginx/html/portal/dist
+      # 日志文件映射
+      - ${DK_LOG_PATH}:/var/log/nginx
+    depends_on:
+      - fishery-api
