@@ -442,29 +442,6 @@ class H5WorkOrderBatchForm(BaseModel):
     fileUrl: Optional[str] = None
 
 
-class H5PrintedWorkOrderItem(BaseModel):
-    workOrderId: Optional[int] = None
-    workOrderCode: Optional[str] = None
-    title: str
-    eventTypeName: Optional[str] = None
-    riskLevelName: Optional[str] = None
-    reporterName: Optional[str] = None
-    locationName: Optional[str] = None
-    addressDetail: Optional[str] = None
-    description: Optional[str] = None
-    suggestion: Optional[str] = None
-    reportTime: Optional[str] = None
-    evidenceList: list[dict[str, Any]] = Field(default_factory=list)
-
-
-class H5PrintedWorkOrderForm(BaseModel):
-    taskId: int
-    noticeNumber: Optional[str] = None
-    documentContent: Optional[str] = None
-    fileUrl: Optional[str] = None
-    workOrders: list[H5PrintedWorkOrderItem] = Field(default_factory=list)
-
-
 class H5DictionaryQuery(BaseModel):
     dictCode: str
 
@@ -482,6 +459,8 @@ class AppTaskDetailForm(BaseModel):
 
 
 class AppWorkOrderPushItem(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
     taskId: Optional[int] = None
     taskCode: Optional[str] = None
     eventTitle: Optional[str] = None
@@ -509,6 +488,10 @@ class AppWorkOrderPushItem(BaseModel):
         None,
         description="现场图片 base64，优先级高于 imageUrl",
     )
+    base64: Optional[str] = Field(None, description="现场图片 base64 兼容字段")
+    image: Optional[str] = Field(None, description="现场图片 base64 兼容字段")
+    imgBase64: Optional[str] = Field(None, description="现场图片 base64 兼容字段")
+    fileBase64: Optional[str] = Field(None, description="现场图片 base64 兼容字段")
     evidenceList: list[dict[str, Any]] = Field(default_factory=list)
 
 

@@ -6,7 +6,6 @@ from app.api.admin_compat.schemas import (
     AppWorkOrderPushItem,
     H5DictionaryQuery,
     H5LoginForm,
-    H5PrintedWorkOrderForm,
     H5TaskForm,
     H5TaskQuery,
     H5WorkOrderBatchForm,
@@ -63,11 +62,6 @@ async def h5_task_work_orders(request: Request, form: H5TaskForm):
 @h5_router.post("/task/work-orders/bind", summary="H5 多选关联任务工单", tags=["H5巡查端"])
 async def h5_task_work_orders_bind(request: Request, form: H5WorkOrderBatchForm):
     return JsonResponse(await mobile_service.bind_task_work_orders(form))
-
-
-@h5_router.post("/task/work-orders/printed", summary="H5 回传已打印工单", tags=["H5巡查端"])
-async def h5_task_work_orders_printed(request: Request, form: H5PrintedWorkOrderForm):
-    return JsonResponse(await mobile_service.save_printed_work_orders(form))
 
 
 @h5_router.post("/upload", summary="H5 上传打印文书", tags=["H5巡查端"])

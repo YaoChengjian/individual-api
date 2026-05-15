@@ -23,7 +23,6 @@ from app.api.admin_compat.schemas import (
     AppTaskDetailForm,
     AppTaskQuery,
     AppWorkOrderPushItem,
-    H5PrintedWorkOrderForm,
     H5LoginForm,
     H5TaskForm,
     H5TaskQuery,
@@ -494,6 +493,7 @@ async def bind_task_work_orders(form: H5WorkOrderBatchForm, current_user: AdminC
     orders = await AdminCompatWorkOrder.filter(id__in=order_ids, source=APP_WORK_ORDER_SOURCE).all()
     if len(orders) != len(order_ids):
         return fail(1, "部分工单不存在")
+    now = datetime.now()
     for order in orders:
         order.task_id = task.id
         if current_user:
@@ -502,37 +502,28 @@ async def bind_task_work_orders(form: H5WorkOrderBatchForm, current_user: AdminC
         elif task.executor_id:
             order.reporter_id = task.executor_id
             order.reporter_name = task.executor_name
+        if form.printed:
+            order.status = "finished"
+            order.push_status = PRINTED_WORK_ORDER_STATUS
+            order.timeline = [
+                *(order.timeline or []),
+                {
+                    "time": now.strftime("%m-%d %H:%M"),
+                    "title": "H5打印",
+                    "desc": "移动端确认打印整改提醒告知书，工单已完成",
+                    "status": "已完成",
+                    "color": "#18a058",
+                    "noticeNumber": form.noticeNumber,
+                    "documentContent": form.documentContent,
+                    "fileUrl": form.fileUrl,
+                },
+            ]
         await order.save()
     task.exception_count = max(task.exception_count, len(orders))
     if task.task_status == "running":
         task.progress = max(task.progress, 70)
     await task.save()
-    return success([_work_order_out(order, True) for order in orders], msg="工单已关联")
-
-
-def _parse_report_time(value: str | None) -> datetime:
-    if not value:
-        return datetime.now()
-    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%m-%d %H:%M:%S", "%m-%d %H:%M"):
-        try:
-            parsed = datetime.strptime(value, fmt)
-            if "%Y" not in fmt:
-                parsed = parsed.replace(year=datetime.now().year)
-            return parsed
-        except ValueError:
-            continue
-    return datetime.now()
-
-
-def _risk_code_from_name(name: str | None) -> str:
-    text = name or ""
-    if "高" in text:
-        return "high"
-    if "中" in text:
-        return "medium"
-    if "低" in text:
-        return "low"
-    return "medium"
+    return success([_work_order_out(order, True) for order in orders], msg="工单已完成" if form.printed else "工单已关联")
 
 
 def _normalize_image_base64(value: str | None) -> str | None:
@@ -540,6 +531,67 @@ def _normalize_image_base64(value: str | None) -> str | None:
         return None
     image_base64 = value.strip()
     return image_base64 or None
+
+
+def _first_image_value(values: list[Any]) -> str | None:
+    for value in values:
+        if isinstance(value, str):
+            normalized = _normalize_image_base64(value)
+            if normalized:
+                return normalized
+    return None
+
+
+def _extract_push_image(item: AppWorkOrderPushItem) -> str | None:
+    values: list[Any] = [
+        item.imageBase64,
+        item.base64,
+        item.image,
+        item.imgBase64,
+        item.fileBase64,
+        item.imageUrl,
+    ]
+    extra = getattr(item, "__pydantic_extra__", None) or {}
+    values.extend(
+        extra.get(key)
+        for key in (
+            "image_base64",
+            "img_base64",
+            "file_base64",
+            "imageData",
+            "image_data",
+            "photoBase64",
+            "photo",
+            "picture",
+            "pic",
+            "url",
+        )
+    )
+    for evidence in item.evidenceList or []:
+        if not isinstance(evidence, dict):
+            continue
+        values.extend(
+            evidence.get(key)
+            for key in (
+                "imageBase64",
+                "base64",
+                "image",
+                "imgBase64",
+                "fileBase64",
+                "imageUrl",
+                "fileUrl",
+                "url",
+            )
+        )
+    return _first_image_value(values)
+
+
+def _safe_event_image_url(image_value: str | None) -> str | None:
+    if not image_value:
+        return None
+    if image_value.startswith("data:") or len(image_value) > 500:
+        return None
+    return image_value
 
 
 def _build_app_evidence_list(item: AppWorkOrderPushItem, image_base64: str | None) -> list[dict[str, Any]]:
@@ -583,80 +635,6 @@ async def upload_h5_print_file(file):
     )
 
 
-async def save_printed_work_orders(form: H5PrintedWorkOrderForm):
-    task = await AdminCompatPatrolTask.get_or_none(id=form.taskId)
-    if not task:
-        return fail(1, "巡查任务不存在")
-    if not form.workOrders:
-        return fail(1, "请选择需要打印的工单")
-
-    now = datetime.now()
-    saved: list[dict[str, Any]] = []
-    for index, item in enumerate(form.workOrders, start=1):
-        work_order_code = item.workOrderCode or f"H5-PRINT-{task.id}-{now.strftime('%Y%m%d%H%M%S')}-{index:03d}"
-        order = None
-        if item.workOrderId and item.workOrderId > 0:
-            order = await AdminCompatWorkOrder.get_or_none(id=item.workOrderId, task_id=task.id)
-        if not order:
-            order = await AdminCompatWorkOrder.get_or_none(work_order_code=work_order_code)
-        payload = {
-            "title": item.title or "H5 打印工单",
-            "event_type": "H5_PRINTED_WORK_ORDER",
-            "event_type_name": item.eventTypeName or "智能巡查事件",
-            "risk_level": _risk_code_from_name(item.riskLevelName),
-            "risk_level_name": item.riskLevelName or "一般",
-            "source": APP_WORK_ORDER_SOURCE,
-            "reporter_id": task.executor_id,
-            "reporter_name": item.reporterName or task.executor_name or "H5巡查员",
-            "area_id": None,
-            "area_name": task.patrol_location or "",
-            "point_name": item.locationName,
-            "event_id": None,
-            "task_id": task.id,
-            "point_record_id": None,
-            "location_name": item.locationName,
-            "address_detail": item.addressDetail,
-            "status": "processed",
-            "push_status": PRINTED_WORK_ORDER_STATUS,
-            "report_time": _parse_report_time(item.reportTime),
-            "deadline_time": now + timedelta(hours=2),
-            "remaining_minutes": 120,
-            "responsible_department": "待分派",
-            "handler_name": "",
-            "description": item.description,
-            "suggestion": item.suggestion,
-            "evidence_list": item.evidenceList,
-            "timeline": [
-                {
-                    "time": now.strftime("%m-%d %H:%M"),
-                    "title": "H5打印",
-                    "desc": "移动端确认打印整改提醒告知书，工单已处理",
-                    "status": "已处理",
-                    "color": "#18a058",
-                    "noticeNumber": form.noticeNumber,
-                    "documentContent": form.documentContent,
-                    "fileUrl": form.fileUrl,
-                }
-            ],
-        }
-        if order:
-            for key, value in payload.items():
-                setattr(order, key, value)
-            await order.save()
-        else:
-            order = await AdminCompatWorkOrder.create(
-                work_order_code=work_order_code,
-                **payload,
-            )
-        saved.append(_work_order_out(order, True))
-
-    task.exception_count = max(task.exception_count, len(saved))
-    if task.task_status == "running":
-        task.progress = max(task.progress, 70)
-    await task.save()
-    return success({"count": len(saved), "list": saved}, msg="打印工单已回传")
-
-
 async def app_push_work_orders(items: list[AppWorkOrderPushItem]):
     created = []
     for index, item in enumerate(items, start=1):
@@ -678,7 +656,7 @@ async def app_push_work_orders(items: list[AppWorkOrderPushItem]):
 
         point = await AdminCompatPatrolPoint.get_or_none(id=item.pointId) if item.pointId else None
         now = datetime.now()
-        image_base64 = _normalize_image_base64(item.imageBase64 or item.imageUrl)
+        image_base64 = _extract_push_image(item)
         evidence_list = _build_app_evidence_list(item, image_base64)
         event_code = f"APP-EVT-{now.strftime('%Y%m%d%H%M%S')}-{index:03d}"
         order_code = f"APP-WO-{now.strftime('%Y%m%d%H%M%S')}-{index:03d}"
@@ -703,7 +681,7 @@ async def app_push_work_orders(items: list[AppWorkOrderPushItem]):
             lng=item.lng if item.lng is not None else (point.lng if point else 0),
             confidence=item.confidence or 0,
             description=item.description,
-            image_url=image_base64,
+            image_url=_safe_event_image_url(image_base64),
             detected_time=now,
         )
         order = await AdminCompatWorkOrder.create(
