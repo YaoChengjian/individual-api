@@ -13,11 +13,18 @@ from app.api.admin_compat.deps import (
     save_admin_access_token,
 )
 from app.api.admin_compat.helpers import get_request_ip, parse_user_agent
-from app.api.admin_compat.models import AdminCompatLoginRecord, AdminCompatUser
+from app.api.admin_compat.models import (
+    AdminCompatLoginRecord,
+    AdminCompatOrganization,
+    AdminCompatRole,
+    AdminCompatUser,
+    AdminCompatUserRole,
+)
 from app.api.admin_compat.schemas import (
     CaptchaResult,
     LoginForm,
     LoginResult,
+    RegisterForm,
     UpdatePasswordForm,
     UpdateUserProfileForm,
 )
@@ -32,8 +39,6 @@ _LAST_CAPTCHA_TEXT: str | None = None
 async def get_captcha():
     global _LAST_CAPTCHA_TEXT
 
-    # 兼容层直接返回验证码文本给前端调试，因此这里额外避免连续两次生成相同内容，
-    # 让“点击刷新验证码”在页面上有更明显的变化感知。
     code = CaptchaService.build_code(exclude=_LAST_CAPTCHA_TEXT).lower()
     _LAST_CAPTCHA_TEXT = code
     image = base64.b64encode(CaptchaService._build_image(code)).decode()
@@ -56,7 +61,7 @@ async def login(form: LoginForm, request: Request):
 
     locked_ttl = await get_login_lock_ttl(user.id)
     if locked_ttl > 0:
-        return fail(1010, f"账号已锁定，请稍后再试")
+        return fail(1010, "账号已锁定，请稍后再试")
 
     if user.status != 0:
         await _create_login_record(
@@ -83,10 +88,18 @@ async def login(form: LoginForm, request: Request):
     token = create_admin_access_token(user.id, user.username)
     await save_admin_access_token(user.id, token)
     await reset_login_failures(user.id)
-    await _create_login_record(request=request, login_type=0, comments="登录成功", user=user)
+    await _create_login_record(
+        request=request,
+        login_type=0,
+        comments="登录成功",
+        user=user,
+    )
 
     return success(
-        LoginResult(access_token=token, user=await build_user_out(user, include_authorities=True)),
+        LoginResult(
+            access_token=token,
+            user=await build_user_out(user, include_authorities=True),
+        ),
         msg="登录成功",
     )
 
@@ -110,7 +123,41 @@ async def get_user_info(request: Request):
     user = await AdminCompatUser.get_or_none(id=current_user.user_id)
     if not user:
         return fail(1004, "账户不存在")
-    return success(await build_user_out(user, include_authorities=True), msg="获取成功")
+    return success(
+        await build_user_out(user, include_authorities=True),
+        msg="获取成功",
+    )
+
+
+async def register(form: RegisterForm):
+    username = form.username.strip()
+    nickname = form.nickname.strip()
+    password = form.password.strip()
+    if not username:
+        return fail(1, "账号不能为空")
+    if not nickname:
+        return fail(1, "昵称不能为空")
+    if form.password != password or not (5 <= len(password) <= 18):
+        return fail(1, "密码必须为5-18位非空白字符")
+    if await AdminCompatUser.get_or_none(username=username):
+        return fail(1, "账号已存在")
+
+    organization = await AdminCompatOrganization.order_by("sort_number", "id").first()
+    user = await AdminCompatUser.create(
+        username=username,
+        password=get_password(password),
+        nickname=nickname,
+        phone=form.phone,
+        email=form.email,
+        status=0,
+        organization_id=organization.id if organization else None,
+    )
+
+    viewer_role = await AdminCompatRole.get_or_none(role_code="viewer")
+    if viewer_role:
+        await AdminCompatUserRole.get_or_create(user_id=user.id, role_id=viewer_role.id)
+
+    return success(msg="注册成功")
 
 
 async def update_password(request: Request, form: UpdatePasswordForm):
@@ -159,7 +206,10 @@ async def update_user_info(request: Request, form: UpdateUserProfileForm):
 
     await user.update_from_dict(updates)
     await user.save()
-    return success(await build_user_out(user, include_authorities=True), msg="保存成功")
+    return success(
+        await build_user_out(user, include_authorities=True),
+        msg="保存成功",
+    )
 
 
 async def _create_login_record(

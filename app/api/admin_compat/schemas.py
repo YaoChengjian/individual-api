@@ -31,6 +31,7 @@ class CurrentAdminUser(FrontBaseModel):
     username: str
     nickname: str
     status: int
+    organization_id: Optional[int] = None
 
 
 class RoleRefIn(BaseModel):
@@ -42,7 +43,6 @@ class LoginForm(BaseModel):
     password: str = Field(..., description="密码")
     code: Optional[str] = Field(None, description="验证码")
     remember: bool = Field(False, description="是否记住登录态")
-    tenantId: Optional[int] = Field(None, description="租户 ID")
 
 
 class LoginResult(FrontBaseModel):
@@ -53,6 +53,14 @@ class LoginResult(FrontBaseModel):
 class CaptchaResult(FrontBaseModel):
     base64: str = Field(..., description="验证码图片")
     text: str = Field(..., description="验证码内容")
+
+
+class RegisterForm(BaseModel):
+    username: str = Field(..., description="用户名")
+    password: str = Field(..., description="密码")
+    nickname: str = Field(..., description="昵称")
+    phone: Optional[str] = Field(None, description="手机号")
+    email: Optional[str] = Field(None, description="邮箱")
 
 
 class UpdatePasswordForm(BaseModel):
@@ -75,6 +83,7 @@ class RoleOut(FrontBaseModel):
     roleId: int
     roleCode: str
     roleName: str
+    isSystemRole: int = 0
     comments: Optional[str] = None
     createTime: datetime
 
@@ -191,6 +200,8 @@ class DictionaryDataOut(FrontBaseModel):
     dictId: int
     dictDataCode: str
     dictDataName: str
+    color: Optional[str] = None
+    ripple: int = 0
     sortNumber: int = 0
     comments: Optional[str] = None
     createTime: datetime
@@ -210,8 +221,295 @@ class DictionaryDataForm(BaseModel):
     dictId: int
     dictDataCode: str
     dictDataName: str
+    color: Optional[str] = None
+    ripple: int = 0
     sortNumber: int = 0
     comments: Optional[str] = None
+
+
+class PatrolTaskQuery(PageParams):
+    taskTitle: Optional[str] = None
+    taskType: Optional[str] = None
+    taskStatus: Optional[str] = None
+    timeStart: Optional[str] = None
+    timeEnd: Optional[str] = None
+    patrolLocation: Optional[str] = None
+    executorId: Optional[int] = None
+
+
+class PatrolTaskDetailForm(BaseModel):
+    taskId: Optional[int] = None
+    taskCode: Optional[str] = None
+
+
+class PatrolTaskWorkOrderQuery(PageParams):
+    taskId: Optional[int] = None
+    taskCode: Optional[str] = None
+
+
+class PatrolTaskOut(FrontBaseModel):
+    taskId: int
+    taskCode: str
+    taskTitle: str
+    taskType: str
+    taskTypeName: str
+    patrolLocation: str
+    planTime: str
+    executorId: int
+    executorName: str
+    taskStatus: str
+    taskStatusName: str
+    progress: int
+    exceptionCount: int
+    creatorName: str
+    createTime: str
+
+
+class PatrolTaskSummaryOut(FrontBaseModel):
+    pending: int
+    running: int
+    finished: int
+    overdue: int
+
+
+class PatrolTaskTourForm(BaseModel):
+    tourKey: str = "task-management"
+
+
+class PatrolCoordForm(BaseModel):
+    lat: float
+    lng: float
+
+
+class PatrolAreaForm(BaseModel):
+    areaId: Optional[int] = None
+    areaName: str = Field(..., min_length=1, max_length=100)
+    center: PatrolCoordForm
+    boundary: list[PatrolCoordForm] = Field(default_factory=list)
+    comments: Optional[str] = None
+
+
+class PatrolPointForm(BaseModel):
+    pointId: Optional[int] = None
+    areaId: Optional[int] = None
+    pointName: str = Field(..., min_length=1, max_length=100)
+    pointType: str = "key_point"
+    lat: float
+    lng: float
+
+
+class PatrolPointRemoveForm(BaseModel):
+    pointId: int
+
+
+class PatrolTaskCreateForm(BaseModel):
+    taskTitle: str = Field(..., min_length=1, max_length=50)
+    taskType: str
+    priority: str
+    description: str = Field(..., min_length=1, max_length=200)
+    aiFocus: bool = False
+    areaIds: list[int] = Field(default_factory=list)
+    pointIds: list[int] = Field(default_factory=list)
+    startTime: str
+    endTime: str
+    durationHours: int = Field(..., ge=1)
+    repeatRule: str = "none"
+    executorId: int
+    draft: bool = False
+
+
+class PatrolTaskUpdateForm(PatrolTaskCreateForm):
+    taskId: int
+
+
+class ClosedLoopQuery(PageParams):
+    keywords: Optional[str] = None
+    status: Optional[str] = None
+    riskLevel: Optional[str] = None
+    areaName: Optional[str] = None
+
+
+class ClosedLoopIdForm(BaseModel):
+    id: int
+
+
+class WorkOrderActionForm(BaseModel):
+    workOrderId: int
+    action: str
+    comments: Optional[str] = None
+
+
+class PatrolMvpQuery(PageParams):
+    status: Optional[str] = None
+    assigneeId: Optional[str] = None
+    keywords: Optional[str] = None
+    mockResult: Optional[str] = None
+
+
+class PatrolMvpTaskCreateForm(BaseModel):
+    title: str = Field("幸福里小区消防安全巡查任务", min_length=1, max_length=50)
+    type: str = "FIRE_SAFETY"
+    startTime: str = "2026-05-12 16:00:00"
+    endTime: str = "2026-05-12 17:30:00"
+    assigneeId: str = "patrol_001"
+    assigneeName: str = "哼哼"
+    pointIds: list[int] = Field(default_factory=list)
+    remark: Optional[str] = "演示任务"
+
+
+class PatrolMvpTaskForm(BaseModel):
+    taskId: Optional[int] = None
+    taskNo: Optional[str] = None
+    operatorId: Optional[str] = "patrol_001"
+    operatorName: Optional[str] = "哼哼"
+
+
+class PatrolMvpTaskPointForm(PatrolMvpTaskForm):
+    pointRecordId: Optional[int] = None
+    pointId: Optional[int] = None
+
+
+class PatrolMvpDetectForm(PatrolMvpTaskPointForm):
+    scene: str = "FIRE_PASSAGE_BLOCKED"
+
+
+class PatrolMvpEvidenceForm(PatrolMvpTaskPointForm):
+    detectionId: Optional[int] = None
+    captureMode: str = "MOCK"
+    fileUrl: str = "/mock/images/fire-passage-blocked-marked.svg"
+
+
+class PatrolMvpWorkOrderDraftForm(PatrolMvpTaskPointForm):
+    detectionId: int
+    evidenceId: int
+
+
+class PatrolMvpWorkOrderForm(BaseModel):
+    workOrderId: Optional[int] = None
+    workOrderNo: Optional[str] = None
+    title: Optional[str] = None
+    addressDetail: Optional[str] = None
+    description: Optional[str] = None
+    operatorId: Optional[str] = "patrol_001"
+    operatorName: Optional[str] = "哼哼"
+    mockResult: Optional[str] = None
+    targetPlatform: str = "DIGITAL_GOVERNANCE_PLATFORM"
+
+
+class PatrolMvpDocumentForm(BaseModel):
+    documentId: Optional[int] = None
+    documentNo: Optional[str] = None
+    workOrderId: Optional[int] = None
+    documentType: str = "RECTIFICATION_NOTICE"
+    printerName: str = "便携打印机-MOCK-001"
+    operatorId: Optional[str] = "patrol_001"
+    operatorName: Optional[str] = "哼哼"
+
+
+class PatrolMvpCallbackForm(BaseModel):
+    thirdOrderNo: Optional[str] = None
+    workOrderNo: str
+    status: str
+    statusName: Optional[str] = None
+    handlerDept: Optional[str] = None
+    handlerName: Optional[str] = None
+    handleResult: Optional[str] = None
+    handleTime: Optional[str] = None
+    remark: Optional[str] = None
+
+
+class H5LoginForm(BaseModel):
+    username: str = Field(..., description="系统用户账号")
+    password: str = Field(..., description="系统用户密码")
+
+
+class H5TaskQuery(PageParams):
+    taskStatus: Optional[str] = None
+    keywords: Optional[str] = None
+
+
+class H5TaskForm(BaseModel):
+    taskId: Optional[int] = None
+    taskCode: Optional[str] = None
+
+
+class H5WorkOrderBatchForm(BaseModel):
+    taskId: int
+    workOrderIds: list[int] = Field(default_factory=list)
+    printed: bool = False
+    noticeNumber: Optional[str] = None
+    documentContent: Optional[str] = None
+    fileUrl: Optional[str] = None
+
+
+class H5PrintedWorkOrderItem(BaseModel):
+    workOrderId: Optional[int] = None
+    workOrderCode: Optional[str] = None
+    title: str
+    eventTypeName: Optional[str] = None
+    riskLevelName: Optional[str] = None
+    reporterName: Optional[str] = None
+    locationName: Optional[str] = None
+    addressDetail: Optional[str] = None
+    description: Optional[str] = None
+    suggestion: Optional[str] = None
+    reportTime: Optional[str] = None
+    evidenceList: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class H5PrintedWorkOrderForm(BaseModel):
+    taskId: int
+    noticeNumber: Optional[str] = None
+    documentContent: Optional[str] = None
+    fileUrl: Optional[str] = None
+    workOrders: list[H5PrintedWorkOrderItem] = Field(default_factory=list)
+
+
+class H5DictionaryQuery(BaseModel):
+    dictCode: str
+
+
+class AppTaskQuery(PageParams):
+    executorId: Optional[int] = None
+    username: Optional[str] = None
+    taskStatus: Optional[str] = None
+    keywords: Optional[str] = None
+
+
+class AppTaskDetailForm(BaseModel):
+    taskId: Optional[int] = None
+    taskCode: Optional[str] = None
+
+
+class AppWorkOrderPushItem(BaseModel):
+    taskId: Optional[int] = None
+    taskCode: Optional[str] = None
+    eventTitle: Optional[str] = None
+    title: Optional[str] = None
+    eventType: str = "AI_PATROL_EVENT"
+    eventTypeName: Optional[str] = "智能巡查事件"
+    riskLevel: str = "medium"
+    riskLevelName: Optional[str] = None
+    reporterId: Optional[int] = None
+    reporterName: Optional[str] = None
+    pointId: Optional[int] = None
+    pointName: Optional[str] = None
+    locationName: Optional[str] = None
+    addressDetail: Optional[str] = None
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    confidence: Optional[float] = None
+    description: Optional[str] = None
+    suggestion: Optional[str] = None
+    imageUrl: Optional[str] = Field(
+        None,
+        description="兼容旧字段：现在按现场图片 base64 接收，支持 data:image/...;base64,... 或纯 base64",
+    )
+    imageBase64: Optional[str] = Field(
+        None,
+        description="现场图片 base64，优先级高于 imageUrl",
+    )
+    evidenceList: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class UserOut(FrontBaseModel):
@@ -271,6 +569,31 @@ class UserForm(BaseModel):
 class UserStatusUpdateForm(BaseModel):
     userId: int
     status: int
+
+
+class AuditLogOut(FrontBaseModel):
+    id: int
+    actorUserId: Optional[int] = None
+    actorName: Optional[str] = None
+    auditType: str
+    targetType: Optional[str] = None
+    targetId: Optional[str] = None
+    summary: str
+    beforeJson: Optional[str] = None
+    afterJson: Optional[str] = None
+    riskLevel: str = "low"
+    ip: Optional[str] = None
+    traceId: Optional[str] = None
+    createTime: datetime
+
+
+class AuditLogQuery(PageParams):
+    auditType: Optional[str] = None
+    actorName: Optional[str] = None
+    riskLevel: Optional[str] = None
+    targetType: Optional[str] = None
+    createTimeStart: Optional[str] = None
+    createTimeEnd: Optional[str] = None
 
 
 class UserPasswordResetForm(BaseModel):

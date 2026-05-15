@@ -85,4 +85,3 @@ async def remove_user_messages(
         user_id=current_user.user_id,
     ).delete()
     return success(msg="删除成功")
-

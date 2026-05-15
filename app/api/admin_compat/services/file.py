@@ -53,7 +53,7 @@ async def upload_base64_file(base64_data: str, file_name: str | None, current_us
     return success((await build_file_record_out(record)).model_dump(mode="json"))
 
 
-async def page_files(params: FileRecordQuery):
+async def page_files(params: FileRecordQuery, current_user: CurrentAdminUser):
     queryset = AdminCompatFileRecord.all()
     if params.name:
         queryset = queryset.filter(name__contains=params.name)
@@ -82,7 +82,7 @@ async def page_files(params: FileRecordQuery):
     return success(build_page_payload(items, total))
 
 
-async def list_files(params: FileRecordQuery | None = None):
+async def list_files(params: FileRecordQuery | None = None, current_user: CurrentAdminUser | None = None):
     params = params or FileRecordQuery(limit=500)
     queryset = AdminCompatFileRecord.all()
     if params.name:
@@ -105,18 +105,22 @@ async def list_files(params: FileRecordQuery | None = None):
     return success([item.model_dump(mode="json") for item in await build_file_records_out(data)])
 
 
-async def remove_file(file_id: int):
-    record = await AdminCompatFileRecord.get_or_none(id=file_id)
+async def remove_file(file_id: int, current_user: CurrentAdminUser):
+    record = await AdminCompatFileRecord.get_or_none(
+        id=file_id,
+    )
     if not record:
         return fail(1, "文件不存在")
     await _delete_file_record(record)
     return success(msg="删除成功")
 
 
-async def remove_files(file_ids: list[int]):
+async def remove_files(file_ids: list[int], current_user: CurrentAdminUser):
     if not file_ids:
         return fail(1, "请选择要删除的文件")
-    data = await AdminCompatFileRecord.filter(id__in=file_ids).all()
+    data = await AdminCompatFileRecord.filter(
+        id__in=file_ids,
+    ).all()
     for record in data:
         await _delete_file_record(record)
     return success(msg="批量删除成功")
@@ -126,4 +130,3 @@ async def _delete_file_record(record: AdminCompatFileRecord):
     absolute_path = Path(ConfigClass.BASE_DIR) / record.path.lstrip("/")
     FileUtils.force_delete(str(absolute_path))
     await record.delete()
-

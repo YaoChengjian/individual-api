@@ -20,6 +20,9 @@ env/
 
 # Env 配置（保留示例）
 .env
+*.db
+*.sqlite
+*.sqlite3
 
 # macOS/Linux/Windows
 .DS_Store

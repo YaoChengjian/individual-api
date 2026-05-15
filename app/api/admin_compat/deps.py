@@ -1,5 +1,3 @@
-from types import SimpleNamespace
-
 from fastapi import Request
 from fastapi.routing import APIRoute
 from jose import JWTError, jwt
@@ -16,7 +14,7 @@ from .constants import (
     TOKEN_EXPIRE_SECONDS,
 )
 from .helpers import make_log_user_context
-from .models import AdminCompatUser
+from .models import AdminCompatRole, AdminCompatUser, AdminCompatUserRole
 from .schemas import CurrentAdminUser
 
 
@@ -30,7 +28,11 @@ def _fmt_seconds(seconds: int) -> str:
 
 def create_admin_access_token(user_id: int, username: str) -> str:
     return create_token(
-        {"user_id": user_id, "username": username, "token_type": "admin_compat"}
+        {
+            "user_id": user_id,
+            "username": username,
+            "token_type": "admin_compat",
+        }
     )
 
 
@@ -86,8 +88,6 @@ async def reset_login_failures(user_id: int):
 class CompatAuthRoute(APIRoute):
     """
     管理台兼容层自己的鉴权路由。
-
-    这里不直接抛 HTTP 401，而是返回项目统一结构，确保前端 axios 拦截器能按既有逻辑工作。
     """
 
     def get_route_handler(self):
@@ -129,6 +129,7 @@ class CompatAuthRoute(APIRoute):
                 username=user.username,
                 nickname=user.nickname,
                 status=user.status,
+                organization_id=user.organization_id,
             )
             request.state.admin_user = current_user
             request.state.cur_user = make_log_user_context(
@@ -146,3 +147,12 @@ def get_admin_user_from_request(request: Request) -> CurrentAdminUser:
         return current_user
     raise RuntimeError("当前请求未完成兼容层鉴权")
 
+
+async def get_current_role_codes(current_user: CurrentAdminUser) -> set[str]:
+    relations = await AdminCompatUserRole.filter(user_id=current_user.user_id).all()
+    role_ids = sorted({item.role_id for item in relations})
+
+    if not role_ids:
+        return set()
+    roles = await AdminCompatRole.filter(id__in=role_ids).all()
+    return {role.role_code for role in roles}

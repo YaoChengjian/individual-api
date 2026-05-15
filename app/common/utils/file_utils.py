@@ -87,7 +87,7 @@ class FileUtils:
         file_name = file.filename
 
         # 文件后缀
-        suffix = Path(file_name).suffix
+        suffix = Path(file_name).suffix.lower()
         if limit_type and suffix not in limit_type:
             raise TipsError("不支持该文件类型")
 
@@ -100,10 +100,17 @@ class FileUtils:
                 raise TipsError(f"文件不能大于{limit_mb}MB")
 
         # 保存的文件名称
-        save_file_name = file_name if use_origin_name else f"{uuid.uuid4().hex}{suffix}"
+        if use_origin_name:
+            origin_stem = Path(file_name).stem
+            save_file_name = f"{origin_stem}{suffix}"
+        else:
+            save_file_name = f"{uuid.uuid4().hex}{suffix}"
         # 保存的文件路径 （这两路径的作用就是为了不暴露服务器的具体位置，以及方便文件迁移，只需要注意必须是 某个目录的 static文件夹作为总文件夹）
         opt_save_file_dir = f"{ConfigClass.static_root_path}{save_dir}" if save_dir else f"{ConfigClass.static_path}{FileUtils.upload_dir}"  # 操作保存时 完整的目录
         db_save_file_dir = save_dir if save_dir else f"{ConfigClass.static_dir}{FileUtils.upload_dir}"  # 保存与数据，以及返回给前端的 目录
+
+        # 自定义目录上传时也要确保目录存在，否则会在 open(...) 时直接报 FileNotFoundError。
+        os.makedirs(opt_save_file_dir, exist_ok=True)
 
         # 保存文件
         opt_save_file_path = f"{opt_save_file_dir}/{save_file_name}"

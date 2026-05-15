@@ -80,6 +80,7 @@ class RequestMiddleware(BaseHTTPMiddleware):
             # print(req_dict.get("code", None))
             log_item = {
                 "user_id": getattr(getattr(request.state, "cur_user", None), "id", None),
+                "tenant_id": getattr(getattr(request.state, "admin_user", None), "tenant_id", None),
                 "user_name": getattr(getattr(request.state, "cur_user", None), "name", None),
                 "path": request.url.path,
                 "method": method,

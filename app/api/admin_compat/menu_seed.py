@@ -15,10 +15,7 @@ def _merge_meta(
     *,
     active: str | None = None,
     badge: dict[str, Any] | None = None,
-    route_path: str | None = None,
-    open_type: str | None = None,
     hide_footer: bool | None = None,
-    hide_timeout: int | None = None,
 ) -> dict[str, Any]:
     meta: dict[str, Any] = {}
     if lang:
@@ -27,15 +24,8 @@ def _merge_meta(
         meta["active"] = active
     if badge:
         meta["props"] = {"badge": badge}
-    if route_path:
-        meta["routePath"] = route_path
-    if open_type:
-        meta["openType"] = open_type
     if hide_footer is not None:
         meta["hideFooter"] = hide_footer
-    if hide_timeout is not None:
-        meta.setdefault("props", {})
-        meta["props"]["hideTimeout"] = hide_timeout
     return meta
 
 
@@ -151,52 +141,6 @@ def _hidden_page(
     )
 
 
-def _iframe_page(
-    key: str,
-    parent_key: str,
-    title: str,
-    path: str,
-    url: str,
-    sort_number: int,
-    *,
-    meta: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    return _page(
-        key,
-        parent_key,
-        title,
-        path,
-        url,
-        sort_number,
-        icon="IconProLinkOutlined",
-        meta=meta,
-        open_type=1,
-    )
-
-
-def _external_link(
-    key: str,
-    title: str,
-    url: str,
-    sort_number: int,
-    *,
-    icon: str,
-    meta: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    return _menu(
-        key,
-        None,
-        title,
-        url,
-        None,
-        sort_number,
-        None,
-        icon=icon,
-        meta=meta,
-        open_type=2,
-    )
-
-
 def _button(
     key: str,
     parent_key: str,
@@ -218,43 +162,121 @@ def _button(
 
 
 DASHBOARD_SEED_MENUS = [
-    _directory(
-        "dashboard-root",
+    _page(
+        "dashboard-overview",
         None,
-        "Dashboard",
-        "/dashboard",
+        "总览",
+        "/dashboard/monitor",
+        "/dashboard/monitor",
         0,
         icon="IconProHomeOutlined",
+        meta=_merge_meta(("總覽", "Overview")),
     ),
+]
+
+
+BUSINESS_SEED_MENUS = [
     _page(
-        "dashboard-workplace",
-        "dashboard-root",
-        "工作台",
-        "/dashboard/workplace",
-        "/dashboard/workplace",
+        "task-management",
+        None,
+        "任务管理",
+        "/task/management",
+        "/task/management",
         1,
-        icon="IconProDesktopOutlined",
-        meta=_merge_meta(("工作臺", "Workplace")),
+        icon="IconProCalendarOutlined",
+    ),
+    _hidden_page(
+        "task-create",
+        "task-management",
+        "新建巡查任务",
+        "/task/management/create",
+        "/task/management/create",
+        101,
+        icon="IconProAppstoreAddOutlined",
+        meta=_merge_meta(("新建巡查任務", "Create Patrol Task"), active="/task/management"),
+    ),
+    _hidden_page(
+        "task-detail",
+        "task-management",
+        "巡查任务详情",
+        "/task/management/detail",
+        "/task/management/detail",
+        102,
+        icon="IconProLinkOutlined",
+        meta=_merge_meta(("巡查任務詳情", "Patrol Task Detail"), active="/task/management"),
+    ),
+    _hidden_page(
+        "task-edit",
+        "task-management",
+        "编辑巡查任务",
+        "/task/management/edit",
+        "/task/management/edit",
+        103,
+        icon="IconProEditOutlined",
+        meta=_merge_meta(("編輯巡查任務", "Edit Patrol Task"), active="/task/management"),
     ),
     _page(
-        "dashboard-analysis",
-        "dashboard-root",
-        "分析页",
-        "/dashboard/analysis",
-        "/dashboard/analysis",
+        "task-schedule",
+        None,
+        "任务调度",
+        "/task/schedule",
+        "/task/schedule",
         2,
-        icon="IconProAnalysisOutlined",
-        meta=_merge_meta(("分析頁", "Analysis"), badge={"value": 1, "type": "warning"}),
+        icon="IconProControlOutlined",
     ),
     _page(
-        "dashboard-monitor",
-        "dashboard-root",
-        "监控页",
-        "/dashboard/monitor",
-        "/dashboard/monitor",
+        "patrol-map",
+        None,
+        "巡查地图",
+        "/patrol/map",
+        "/patrol/map",
         3,
-        icon="IconProDashboardOutlined",
-        meta=_merge_meta(("監控頁", "Monitor")),
+        icon="IconProCompassOutlined",
+    ),
+    _page(
+        "event-workorder",
+        None,
+        "事件工单",
+        "/event/workorder",
+        "/event/workorder",
+        4,
+        icon="IconProWarningOutlined",
+    ),
+    _page(
+        "event-push-log",
+        None,
+        "推送日志",
+        "/event/push-log",
+        "/event/push-log",
+        5,
+        icon="IconProLogOutlined",
+    ),
+    _page(
+        "document-center",
+        None,
+        "文书中心",
+        "/document/center",
+        "/document/center",
+        6,
+        icon="IconProBookOutlined",
+    ),
+    _page(
+        "report-center",
+        None,
+        "报告中心",
+        "/report/center",
+        "/report/center",
+        7,
+        icon="IconProAnalysisOutlined",
+    ),
+    _page(
+        "personnel-equipment",
+        None,
+        "人员设备",
+        "/personnel/equipment",
+        "/personnel/equipment",
+        8,
+        icon="IconProUserOutlined",
     ),
 ]
 
@@ -263,11 +285,11 @@ SYSTEM_SEED_MENUS = [
     _directory(
         "system-root",
         None,
-        "系统管理",
+        "系统设置",
         "/system",
-        1,
+        99,
         icon="IconProSettingOutlined",
-        meta=_merge_meta(("系統管理", "System")),
+        meta=_merge_meta(("系統設置", "System Settings")),
     ),
     _page(
         "system-user",
@@ -369,7 +391,7 @@ SYSTEM_SEED_MENUS = [
         "字典管理",
         "/system/dictionary",
         "/system/dictionary",
-        5,
+        7,
         icon="IconProBookOutlined",
         meta=_merge_meta(("字典管理", "Dictionary"), hide_footer=True),
     ),
@@ -422,7 +444,7 @@ SYSTEM_SEED_MENUS = [
         "文件管理",
         "/system/file",
         "/system/file",
-        6,
+        8,
         icon="IconProFolderOutlined",
         meta=_merge_meta(("檔案管理", "File")),
     ),
@@ -434,7 +456,7 @@ SYSTEM_SEED_MENUS = [
         "登录日志",
         "/system/login-record",
         "/system/login-record",
-        7,
+        9,
         icon="IconProCalendarOutlined",
         authority="sys:login-record:list",
         meta=_merge_meta(("登入日誌", "LoginRecord")),
@@ -445,293 +467,21 @@ SYSTEM_SEED_MENUS = [
         "操作日志",
         "/system/operation-record",
         "/system/operation-record",
-        8,
+        10,
         icon="IconProLogOutlined",
         authority="sys:operation-record:list",
         meta=_merge_meta(("操作日誌", "OperationRecord")),
     ),
-]
-
-
-FORM_SEED_MENUS = [
-    _directory(
-        "form-root",
-        None,
-        "表单页面",
-        "/form",
-        2,
-        icon="IconProFormOutlined",
-        meta=_merge_meta(("表單頁面", "Form"), badge={"value": "New"}),
-    ),
     _page(
-        "form-basic",
-        "form-root",
-        "基础表单",
-        "/form/basic",
-        "/form/basic",
-        1,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("基礎表單", "Basic Form")),
-    ),
-    _page(
-        "form-advanced",
-        "form-root",
-        "复杂表单",
-        "/form/advanced",
-        "/form/advanced",
-        2,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("複雜表單", "Advanced Form")),
-    ),
-    _page(
-        "form-step",
-        "form-root",
-        "分步表单",
-        "/form/step",
-        "/form/step",
-        3,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("分步表單", "Step Form")),
-    ),
-    _page(
-        "form-build",
-        "form-root",
-        "表单构建",
-        "/form/build",
-        "/form/build",
-        4,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("表單構建", "Form Build"), badge={"isDot": True}),
-    ),
-]
-
-
-LIST_SEED_MENUS = [
-    _directory(
-        "list-root",
-        None,
-        "列表页面",
-        "/list",
-        3,
-        icon="IconProTableOutlined",
-        meta=_merge_meta(("清單頁面", "List"), hide_timeout=450),
-    ),
-    _page(
-        "list-basic",
-        "list-root",
-        "基础列表",
-        "/list/basic",
-        "/list/basic",
-        1,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("基礎清單", "Basic List")),
-    ),
-    _page(
-        "list-user",
-        "list-root",
-        "左树右表",
-        "/list/user",
-        "/list/user",
-        2,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("左樹右表", "Tree List")),
-    ),
-    _page(
-        "list-advanced",
-        "list-root",
-        "复杂列表",
-        "/list/advanced",
-        "/list/advanced",
-        3,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("複雜清單", "Advanced List")),
-    ),
-    _directory(
-        "list-card-root",
-        "list-root",
-        "卡片列表",
-        "/list/card",
-        4,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("卡片清單", "Card List"), hide_timeout=100),
-    ),
-    _page(
-        "list-card-project",
-        "list-card-root",
-        "项目列表",
-        "/list/card/project",
-        "/list/card/project",
-        1,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("項目清單", "Project")),
-    ),
-    _page(
-        "list-card-application",
-        "list-card-root",
-        "应用列表",
-        "/list/card/application",
-        "/list/card/application",
-        2,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("應用清單", "Application")),
-    ),
-    _page(
-        "list-card-article",
-        "list-card-root",
-        "文章列表",
-        "/list/card/article",
-        "/list/card/article",
-        3,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("文章清單", "Article")),
-    ),
-    _hidden_page(
-        "list-basic-add",
-        "list-basic",
-        "添加用户",
-        "/list/basic/add",
-        "/list/basic/add",
-        4,
-        meta=_merge_meta(("添加用戶", "Add User"), active="/list/basic"),
-    ),
-    _hidden_page(
-        "list-basic-edit",
-        "list-basic",
-        "修改用户",
-        "/list/basic/edit/:id",
-        "/list/basic/edit",
-        5,
-        meta=_merge_meta(("編輯用戶", "Edit User"), active="/list/basic"),
-    ),
-    _directory(
-        "list-users-root",
-        "list-root",
-        "复杂路由",
-        "/list/users",
-        5,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("複雜路由", "Route Demo"), hide_timeout=100),
-    ),
-    _page(
-        "list-users-male",
-        "list-users-root",
-        "男用户",
-        "/list/users/1",
-        "/list/users",
-        1,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("男用戶", "Male Users")),
-    ),
-    _hidden_page(
-        "list-users-male-detail",
-        "list-users-male",
-        "男用户详情",
-        "/list/users/details/1/:id",
-        "/list/users/details",
-        1,
-        meta=_merge_meta(("男用戶詳情", "MaleUserDetails"), active="/list/users/1"),
-    ),
-    _page(
-        "list-users-female",
-        "list-users-root",
-        "女用户",
-        "/list/users/2",
-        "/list/users",
-        2,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("女用戶", "Female Users")),
-    ),
-    _hidden_page(
-        "list-users-female-detail",
-        "list-users-female",
-        "女用户详情",
-        "/list/users/details/2/:id",
-        "/list/users/details",
-        1,
-        meta=_merge_meta(("女用戶詳情", "FemaleUserDetails"), active="/list/users/2"),
-    ),
-    _page(
-        "list-build",
-        "list-root",
-        "列表构建",
-        "/list/build",
-        "/list/build",
-        5,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("列表構建", "List Build"), badge={"isDot": True}),
-    ),
-]
-
-
-RESULT_SEED_MENUS = [
-    _directory(
-        "result-root",
-        None,
-        "结果页面",
-        "/result",
-        4,
-        icon="IconProCheckCircleOutlined",
-        meta=_merge_meta(("結果頁面", "Result")),
-    ),
-    _page(
-        "result-success",
-        "result-root",
-        "成功页",
-        "/result/success",
-        "/result/success",
-        1,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("成功頁", "Success")),
-    ),
-    _page(
-        "result-fail",
-        "result-root",
-        "失败页",
-        "/result/fail",
-        "/result/fail",
-        2,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("失敗頁", "Fail")),
-    ),
-]
-
-
-EXCEPTION_SEED_MENUS = [
-    _directory(
-        "exception-root",
-        None,
-        "异常页面",
-        "/exception",
-        5,
-        icon="IconProWarningOutlined",
-        meta=_merge_meta(("异常頁面", "Exception")),
-    ),
-    _page(
-        "exception-403",
-        "exception-root",
-        "403",
-        "/exception/403",
-        "/exception/403",
-        1,
-        icon="IconProLinkOutlined",
-    ),
-    _page(
-        "exception-404",
-        "exception-root",
-        "404",
-        "/exception/404",
-        "/exception/404",
-        2,
-        icon="IconProLinkOutlined",
-    ),
-    _page(
-        "exception-500",
-        "exception-root",
-        "500",
-        "/exception/500",
-        "/exception/500",
-        3,
-        icon="IconProLinkOutlined",
+        "system-audit-log",
+        "system-root",
+        "审计日志",
+        "/system/audit-log",
+        "/system/audit-log",
+        11,
+        icon="IconProProtectOutlined",
+        authority="sys:audit-log:list",
+        meta=_merge_meta(("審計日誌", "AuditLog")),
     ),
 ]
 
@@ -742,7 +492,7 @@ USER_SEED_MENUS = [
         None,
         "个人中心",
         "/user",
-        6,
+        10,
         icon="IconProControlOutlined",
         meta=_merge_meta(("個人中心", "User")),
     ),
@@ -779,7 +529,7 @@ EXTENSION_SEED_MENUS = [
         None,
         "扩展组件",
         "/extension",
-        7,
+        9,
         icon="IconProAppstoreAddOutlined",
         meta=_merge_meta(None, badge={"isDot": True}),
     ),
@@ -821,78 +571,10 @@ EXTENSION_SEED_MENUS = [
 ]
 
 
-IFRAME_SEED_MENUS = [
-    _directory(
-        "iframe-root",
-        None,
-        "内嵌页面",
-        "/iframe",
-        8,
-        icon="IconProLinkOutlined",
-        meta=_merge_meta(("內嵌頁面", "IFrame")),
-    ),
-    _iframe_page(
-        "iframe-website",
-        "iframe-root",
-        "官网",
-        "/iframe/eleadmin",
-        "https://www.eleadmin.com",
-        1,
-        meta=_merge_meta(
-            ("官網", "Website"),
-            active="/iframe/eleadmin",
-            route_path="/iframe/eleadmin/:url?",
-            open_type="iframe",
-        ),
-    ),
-    _iframe_page(
-        "iframe-doc",
-        "iframe-root",
-        "文档",
-        "/iframe/eleadmin-doc",
-        "https://www.eleadmin.com/doc/eleadminplus/",
-        2,
-        meta=_merge_meta(("檔案", "Document")),
-    ),
-]
-
-
-EXAMPLE_SEED_MENUS = [
-    _page(
-        "example-root",
-        None,
-        "功能演示",
-        "/example",
-        "/example",
-        9,
-        icon="IconProCompassOutlined",
-        meta=_merge_meta(("功能演示", "Demo")),
-    )
-]
-
-
-EXTERNAL_LINK_SEED_MENUS = [
-    _external_link(
-        "authorization-link",
-        "获取授权",
-        "https://eleadmin.com/goods/26",
-        10,
-        icon="IconProProtectOutlined",
-        meta=_merge_meta(("獲取授權", "Authorization")),
-    )
-]
-
-
 SEED_MENUS = [
     *DASHBOARD_SEED_MENUS,
-    *SYSTEM_SEED_MENUS,
-    *FORM_SEED_MENUS,
-    *LIST_SEED_MENUS,
-    *RESULT_SEED_MENUS,
-    *EXCEPTION_SEED_MENUS,
-    *USER_SEED_MENUS,
+    *BUSINESS_SEED_MENUS,
     *EXTENSION_SEED_MENUS,
-    *IFRAME_SEED_MENUS,
-    *EXAMPLE_SEED_MENUS,
-    *EXTERNAL_LINK_SEED_MENUS,
+    *USER_SEED_MENUS,
+    *SYSTEM_SEED_MENUS,
 ]

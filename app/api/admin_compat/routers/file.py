@@ -32,22 +32,33 @@ async def upload_base64_file(
 
 
 @router.post("/page", summary="分页查询文件", tags=["管理台兼容层-文件"])
-async def page_files(params: FileRecordQuery):
-    return JsonResponse(await file_service.page_files(params))
+async def page_files(params: FileRecordQuery, request: Request):
+    return JsonResponse(
+        await file_service.page_files(params, get_admin_user_from_request(request))
+    )
 
 
 @router.post("/list", summary="查询文件列表", tags=["管理台兼容层-文件"])
-async def list_files(params: FileRecordQuery = Body(default_factory=FileRecordQuery)):
-    return JsonResponse(await file_service.list_files(params))
+async def list_files(
+    request: Request,
+    params: FileRecordQuery = Body(default_factory=FileRecordQuery),
+):
+    return JsonResponse(
+        await file_service.list_files(params, get_admin_user_from_request(request))
+    )
 
 
 @router.post("/remove/{file_id}", summary="删除文件", tags=["管理台兼容层-文件"])
 @log_api
-async def remove_file(file_id: int):
-    return JsonResponse(await file_service.remove_file(file_id))
+async def remove_file(file_id: int, request: Request):
+    return JsonResponse(
+        await file_service.remove_file(file_id, get_admin_user_from_request(request))
+    )
 
 
 @router.post("/remove/batch", summary="批量删除文件", tags=["管理台兼容层-文件"])
 @log_api
-async def remove_files(file_ids: list[int]):
-    return JsonResponse(await file_service.remove_files(file_ids))
+async def remove_files(file_ids: list[int], request: Request):
+    return JsonResponse(
+        await file_service.remove_files(file_ids, get_admin_user_from_request(request))
+    )

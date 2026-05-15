@@ -2,7 +2,12 @@ from fastapi import APIRouter, Request
 
 from app.api.admin_compat.deps import CompatAuthRoute
 from app.api.admin_compat.services import auth as auth_service
-from app.api.admin_compat.schemas import LoginForm, UpdatePasswordForm, UpdateUserProfileForm
+from app.api.admin_compat.schemas import (
+    LoginForm,
+    RegisterForm,
+    UpdatePasswordForm,
+    UpdateUserProfileForm,
+)
 from app.common.decorators.log import log_api
 from app.common.utils.response import JsonResponse
 
@@ -18,6 +23,11 @@ async def get_captcha():
 @public_router.post("/login", summary="账号登录", tags=["管理台兼容层-认证"])
 async def login(form: LoginForm, request: Request):
     return JsonResponse(await auth_service.login(form, request))
+
+
+@public_router.post("/register", summary="账号注册", tags=["管理台兼容层-认证"])
+async def register(form: RegisterForm):
+    return JsonResponse(await auth_service.register(form))
 
 
 @protected_router.post("/logout", summary="退出登录", tags=["管理台兼容层-认证"])
@@ -40,4 +50,3 @@ async def update_password(form: UpdatePasswordForm, request: Request):
 @log_api
 async def update_user_info(form: UpdateUserProfileForm, request: Request):
     return JsonResponse(await auth_service.update_user_info(request, form))
-

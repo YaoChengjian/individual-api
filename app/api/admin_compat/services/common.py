@@ -7,6 +7,7 @@ from app.api.admin_compat.helpers import (
     parse_user_agent,
 )
 from app.api.admin_compat.models import (
+    AdminCompatAuditLog,
     AdminCompatDictionary,
     AdminCompatDictionaryData,
     AdminCompatFileRecord,
@@ -22,6 +23,7 @@ from app.api.admin_compat.models import (
     AdminCompatUserRole,
 )
 from app.api.admin_compat.schemas import (
+    AuditLogOut,
     DictionaryDataOut,
     DictionaryOut,
     FileRecordOut,
@@ -49,13 +51,14 @@ def build_role_out(role: AdminCompatRole) -> RoleOut:
         roleId=role.id,
         roleCode=role.role_code,
         roleName=role.role_name,
+        isSystemRole=role.is_system_role,
         comments=role.comments,
         createTime=role.create_time,
     )
 
 
 def build_menu_out(menu: AdminCompatMenu, checked: bool | None = None) -> MenuOut:
-    payload = MenuOut(
+    return MenuOut(
         menuId=menu.id,
         parentId=menu.parent_id,
         title=menu.title,
@@ -72,7 +75,6 @@ def build_menu_out(menu: AdminCompatMenu, checked: bool | None = None) -> MenuOu
         redirect=menu.redirect,
         checked=checked,
     )
-    return payload
 
 
 def build_organization_out(
@@ -115,6 +117,8 @@ def build_dictionary_data_out(
         dictId=detail.dict_id,
         dictDataCode=detail.dict_data_code,
         dictDataName=detail.dict_data_name,
+        color=detail.color,
+        ripple=detail.ripple,
         sortNumber=detail.sort_number,
         comments=detail.comments,
         createTime=detail.create_time,
@@ -132,11 +136,12 @@ async def build_users_out(
         return []
 
     user_ids = [user.id for user in user_list]
+    roles_by_user: dict[int, list[AdminCompatRole]] = {user.id: [] for user in user_list}
+
     role_relations = await AdminCompatUserRole.filter(user_id__in=user_ids).all()
     role_ids = sorted({relation.role_id for relation in role_relations})
     roles = await AdminCompatRole.filter(id__in=role_ids).all() if role_ids else []
     role_map = {role.id: role for role in roles}
-    roles_by_user: dict[int, list[AdminCompatRole]] = {user.id: [] for user in user_list}
     for relation in role_relations:
         role = role_map.get(relation.role_id)
         if role:
@@ -152,8 +157,17 @@ async def build_users_out(
     sex_map = await load_dictionary_label_map("sex")
 
     authorities_by_user: dict[int, list[AdminCompatMenu]] = {user.id: [] for user in user_list}
-    if include_authorities and role_ids:
-        role_menu_relations = await AdminCompatRoleMenu.filter(role_id__in=role_ids).all()
+    role_ids_for_authorities = sorted(
+        {
+            role.id
+            for role_list in roles_by_user.values()
+            for role in role_list
+        }
+    )
+    if include_authorities and role_ids_for_authorities:
+        role_menu_relations = await AdminCompatRoleMenu.filter(
+            role_id__in=role_ids_for_authorities
+        ).all()
         menu_ids = sorted({relation.menu_id for relation in role_menu_relations})
         menus = (
             await AdminCompatMenu.filter(id__in=menu_ids).order_by("sort_number", "id").all()
@@ -215,7 +229,12 @@ async def build_user_out(
     *,
     include_authorities: bool = False,
 ) -> UserOut:
-    return (await build_users_out([user], include_authorities=include_authorities))[0]
+    return (
+        await build_users_out(
+            [user],
+            include_authorities=include_authorities,
+        )
+    )[0]
 
 
 async def build_file_records_out(
@@ -301,6 +320,24 @@ def build_message_out(message: AdminCompatUserMessage) -> UserMessageOut:
         avatar=message.avatar,
         icon=message.icon,
         color=message.color,
+    )
+
+
+def build_audit_log_out(log: AdminCompatAuditLog) -> AuditLogOut:
+    return AuditLogOut(
+        id=log.id,
+        actorUserId=log.actor_user_id,
+        actorName=log.actor_name,
+        auditType=log.audit_type,
+        targetType=log.target_type,
+        targetId=log.target_id,
+        summary=log.summary,
+        beforeJson=json_dumps(log.before_json),
+        afterJson=json_dumps(log.after_json),
+        riskLevel=log.risk_level,
+        ip=log.ip,
+        traceId=log.trace_id,
+        createTime=log.create_time,
     )
 
 
