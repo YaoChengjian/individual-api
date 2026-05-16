@@ -225,26 +225,27 @@ SEED_DICTIONARIES = [
 SEED_PATROL_AREAS = [
     {
         "area_code": "AREA_BYDDN",
-        "area_name": "广东省广州市白云区白云大道南1039-1045号",
-        "center_lat": 23.1846,
-        "center_lng": 113.2761,
+        "area_name": "广州白云国际会议中心",
+        "center_lat": 23.188677,
+        "center_lng": 113.279451,
         "sort_number": 10,
-        "comments": "白云大道南演示巡查面",
+        "comments": "广州白云国际会议中心演示巡查面",
         "boundary": [
-            {"lat": 23.1858, "lng": 113.2743},
-            {"lat": 23.1860, "lng": 113.2764},
-            {"lat": 23.1850, "lng": 113.2780},
-            {"lat": 23.1836, "lng": 113.2776},
-            {"lat": 23.1833, "lng": 113.2752},
-            {"lat": 23.1845, "lng": 113.2741},
+            {"lat": 23.19010, "lng": 113.27862},
+            {"lat": 23.19002, "lng": 113.28020},
+            {"lat": 23.18942, "lng": 113.28108},
+            {"lat": 23.18855, "lng": 113.28092},
+            {"lat": 23.18772, "lng": 113.27982},
+            {"lat": 23.18784, "lng": 113.27855},
+            {"lat": 23.18866, "lng": 113.27810},
         ],
     },
 ]
 
 SEED_PATROL_POINTS = [
-    {"area_code": "AREA_BYDDN", "point_code": "DEMO-01", "point_name": "演示点01", "point_type": "key_point", "lat": 23.1853, "lng": 113.2751, "sort_number": 10},
-    {"area_code": "AREA_BYDDN", "point_code": "DEMO-02", "point_name": "演示点02", "point_type": "key_point", "lat": 23.1847, "lng": 113.2762, "sort_number": 20},
-    {"area_code": "AREA_BYDDN", "point_code": "DEMO-03", "point_name": "演示点03", "point_type": "key_point", "lat": 23.1840, "lng": 113.2769, "sort_number": 30},
+    {"area_code": "AREA_BYDDN", "point_code": "DEMO-01", "point_name": "巡查点01", "point_type": "key_point", "lat": 23.189511, "lng": 113.280523, "sort_number": 10},
+    {"area_code": "AREA_BYDDN", "point_code": "DEMO-02", "point_name": "巡查点02", "point_type": "key_point", "lat": 23.188306, "lng": 113.279493, "sort_number": 20},
+    {"area_code": "AREA_BYDDN", "point_code": "DEMO-03", "point_name": "巡查点03", "point_type": "key_point", "lat": 23.188677, "lng": 113.279451, "sort_number": 30},
 ]
 
 SEED_PATROL_USER_DEVICES = [
@@ -258,12 +259,12 @@ SEED_PATROL_USER_DEVICES = [
 SEED_PATROL_TASKS = [
     {
         "task_code": "RWD20260515141720",
-        "task_title": "白云大道南演示巡查任务",
+        "task_title": "广州白云国际会议中心演示巡查任务",
         "task_type": "fire_safety",
         "priority": "high",
-        "description": "围绕白云大道南1039-1045号演示区域开展闭环巡查。",
+        "description": "围绕广州白云国际会议中心演示区域开展闭环巡查。",
         "ai_focus": 1,
-        "patrol_location": "广东省广州市白云区白云大道南1039-1045号",
+        "patrol_location": "广州白云国际会议中心",
         "area_codes": ["AREA_BYDDN"],
         "point_codes": ["DEMO-01", "DEMO-02", "DEMO-03"],
         "area_ids": [],
