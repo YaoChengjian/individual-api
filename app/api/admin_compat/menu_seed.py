@@ -16,6 +16,7 @@ def _merge_meta(
     active: str | None = None,
     badge: dict[str, Any] | None = None,
     hide_footer: bool | None = None,
+    keep_alive: bool | None = None,
 ) -> dict[str, Any]:
     meta: dict[str, Any] = {}
     if lang:
@@ -26,6 +27,8 @@ def _merge_meta(
         meta["props"] = {"badge": badge}
     if hide_footer is not None:
         meta["hideFooter"] = hide_footer
+    if keep_alive is not None:
+        meta["keepAlive"] = keep_alive
     return meta
 
 
@@ -193,7 +196,11 @@ BUSINESS_SEED_MENUS = [
         "/task/management/create",
         101,
         icon="IconProAppstoreAddOutlined",
-        meta=_merge_meta(("新建巡查任務", "Create Patrol Task"), active="/task/management"),
+        meta=_merge_meta(
+            ("新建巡查任務", "Create Patrol Task"),
+            active="/task/management",
+            keep_alive=False,
+        ),
     ),
     _hidden_page(
         "task-detail",

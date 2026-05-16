@@ -414,7 +414,7 @@ async def start_task(form: H5TaskForm, current_user: AdminCompatUser | None = No
             task_status="running",
         ).exclude(id=task.id).first()
         if running:
-            return fail(1, f"当前已有执行中的任务：{running.task_title}")
+            return fail(1, f"当前还有任务未执行完成：{running.task_title}，请先结束该任务后再开始新的巡查任务")
     if task.task_status != "waiting":
         return fail(1, "当前任务状态不可开始")
     old_status = task.task_status

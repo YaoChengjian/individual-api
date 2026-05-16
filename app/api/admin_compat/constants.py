@@ -224,59 +224,27 @@ SEED_DICTIONARIES = [
 
 SEED_PATROL_AREAS = [
     {
-        "area_code": "AREA_XFL",
-        "area_name": "幸福里小区",
-        "center_lat": 23.1372,
-        "center_lng": 113.2621,
+        "area_code": "AREA_BYDDN",
+        "area_name": "广东省广州市白云区白云大道南1039-1045号",
+        "center_lat": 23.1846,
+        "center_lng": 113.2761,
         "sort_number": 10,
-        "comments": "住宅社区示例面",
+        "comments": "白云大道南演示巡查面",
         "boundary": [
-            {"lat": 23.1390, "lng": 113.2583},
-            {"lat": 23.1394, "lng": 113.2635},
-            {"lat": 23.1367, "lng": 113.2668},
-            {"lat": 23.1339, "lng": 113.2644},
-            {"lat": 23.1345, "lng": 113.2596},
-        ],
-    },
-    {
-        "area_code": "AREA_YHG",
-        "area_name": "阳光花园社区",
-        "center_lat": 23.1312,
-        "center_lng": 113.2577,
-        "sort_number": 20,
-        "comments": "社区治理示例面",
-        "boundary": [
-            {"lat": 23.1342, "lng": 113.2541},
-            {"lat": 23.1334, "lng": 113.2592},
-            {"lat": 23.1300, "lng": 113.2614},
-            {"lat": 23.1274, "lng": 113.2576},
-            {"lat": 23.1291, "lng": 113.2530},
-        ],
-    },
-    {
-        "area_code": "AREA_PA",
-        "area_name": "平安社区",
-        "center_lat": 23.1282,
-        "center_lng": 113.2650,
-        "sort_number": 30,
-        "comments": "重点区域示例面",
-        "boundary": [
-            {"lat": 23.1311, "lng": 113.2621},
-            {"lat": 23.1303, "lng": 113.2675},
-            {"lat": 23.1266, "lng": 113.2685},
-            {"lat": 23.1248, "lng": 113.2642},
-            {"lat": 23.1274, "lng": 113.2610},
+            {"lat": 23.1858, "lng": 113.2743},
+            {"lat": 23.1860, "lng": 113.2764},
+            {"lat": 23.1850, "lng": 113.2780},
+            {"lat": 23.1836, "lng": 113.2776},
+            {"lat": 23.1833, "lng": 113.2752},
+            {"lat": 23.1845, "lng": 113.2741},
         ],
     },
 ]
 
 SEED_PATROL_POINTS = [
-    {"area_code": "AREA_XFL", "point_code": "XFL-3", "point_name": "幸福里小区3号楼", "point_type": "building", "lat": 23.1380, "lng": 113.2603, "sort_number": 10},
-    {"area_code": "AREA_XFL", "point_code": "XFL-5", "point_name": "幸福里小区5号楼", "point_type": "building", "lat": 23.1374, "lng": 113.2644, "sort_number": 20},
-    {"area_code": "AREA_XFL", "point_code": "XFL-SQ", "point_name": "幸福里小区中心广场", "point_type": "key_point", "lat": 23.1358, "lng": 113.2625, "sort_number": 30},
-    {"area_code": "AREA_YHG", "point_code": "YHG-1", "point_name": "阳光花园社区1号楼", "point_type": "building", "lat": 23.1322, "lng": 113.2560, "sort_number": 10},
-    {"area_code": "AREA_YHG", "point_code": "YHG-2", "point_name": "阳光花园社区2号楼", "point_type": "building", "lat": 23.1301, "lng": 113.2591, "sort_number": 20},
-    {"area_code": "AREA_PA", "point_code": "PA-DM", "point_name": "平安社区东门岗亭", "point_type": "key_point", "lat": 23.1280, "lng": 113.2669, "sort_number": 10},
+    {"area_code": "AREA_BYDDN", "point_code": "DEMO-01", "point_name": "演示点01", "point_type": "key_point", "lat": 23.1853, "lng": 113.2751, "sort_number": 10},
+    {"area_code": "AREA_BYDDN", "point_code": "DEMO-02", "point_name": "演示点02", "point_type": "key_point", "lat": 23.1847, "lng": 113.2762, "sort_number": 20},
+    {"area_code": "AREA_BYDDN", "point_code": "DEMO-03", "point_name": "演示点03", "point_type": "key_point", "lat": 23.1840, "lng": 113.2769, "sort_number": 30},
 ]
 
 SEED_PATROL_USER_DEVICES = [
@@ -290,14 +258,14 @@ SEED_PATROL_USER_DEVICES = [
 SEED_PATROL_TASKS = [
     {
         "task_code": "RWD20260515141720",
-        "task_title": "幸福里小区消防安全巡查任务",
+        "task_title": "白云大道南演示巡查任务",
         "task_type": "fire_safety",
         "priority": "high",
-        "description": "围绕幸福里小区重点楼栋、消防通道和公共区域开展闭环巡查。",
+        "description": "围绕白云大道南1039-1045号演示区域开展闭环巡查。",
         "ai_focus": 1,
-        "patrol_location": "幸福里小区",
-        "area_codes": ["AREA_XFL"],
-        "point_codes": ["XFL-3", "XFL-5", "XFL-SQ"],
+        "patrol_location": "广东省广州市白云区白云大道南1039-1045号",
+        "area_codes": ["AREA_BYDDN"],
+        "point_codes": ["DEMO-01", "DEMO-02", "DEMO-03"],
         "area_ids": [],
         "point_ids": [],
         "plan_time": "2026-05-20 08:30",

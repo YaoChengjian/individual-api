@@ -389,6 +389,11 @@ async def _ensure_patrol_tasks(
 
 
 async def _ensure_patrol_area_points():
+    seed_area_codes = {item["area_code"] for item in SEED_PATROL_AREAS}
+    seed_point_codes = {item["point_code"] for item in SEED_PATROL_POINTS}
+    await AdminCompatPatrolPoint.exclude(point_code__in=seed_point_codes).delete()
+    await AdminCompatPatrolArea.exclude(area_code__in=seed_area_codes).delete()
+
     area_id_map: dict[str, int] = {}
     for item in SEED_PATROL_AREAS:
         area = await AdminCompatPatrolArea.get_or_none(area_code=item["area_code"])
