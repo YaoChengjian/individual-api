@@ -9,6 +9,7 @@ from app.api.admin_compat.schemas import (
     H5TaskForm,
     H5TaskQuery,
     H5WorkOrderBatchForm,
+    H5WorkOrderUpdateForm,
 )
 from app.api.admin_compat.services import mobile as mobile_service
 from app.common.utils.response import JsonResponse
@@ -62,6 +63,11 @@ async def h5_task_work_orders(request: Request, form: H5TaskForm):
 @h5_router.post("/task/work-orders/bind", summary="H5 多选关联任务工单", tags=["H5巡查端"])
 async def h5_task_work_orders_bind(request: Request, form: H5WorkOrderBatchForm):
     return JsonResponse(await mobile_service.bind_task_work_orders(form))
+
+
+@h5_router.post("/task/work-orders/update", summary="H5 更新待处理工单", tags=["H5巡查端"])
+async def h5_task_work_order_update(request: Request, form: H5WorkOrderUpdateForm):
+    return JsonResponse(await mobile_service.update_task_work_order(form))
 
 
 @h5_router.post("/upload", summary="H5 上传打印文书", tags=["H5巡查端"])

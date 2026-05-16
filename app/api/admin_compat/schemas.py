@@ -442,6 +442,13 @@ class H5WorkOrderBatchForm(BaseModel):
     fileUrl: Optional[str] = None
 
 
+class H5WorkOrderUpdateForm(BaseModel):
+    taskId: int
+    workOrderId: int
+    title: str = Field(..., min_length=1, max_length=50)
+    description: str = Field(..., min_length=1, max_length=300)
+
+
 class H5DictionaryQuery(BaseModel):
     dictCode: str
 

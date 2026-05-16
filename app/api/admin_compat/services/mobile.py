@@ -27,6 +27,7 @@ from app.api.admin_compat.schemas import (
     H5TaskForm,
     H5TaskQuery,
     H5WorkOrderBatchForm,
+    H5WorkOrderUpdateForm,
 )
 from app.common.utils.jwt_utlis import ALGORITHM, SECRET_KEY, create_token, verify_password
 from app.common.utils.file_utils import FileUtils
@@ -524,6 +525,44 @@ async def bind_task_work_orders(form: H5WorkOrderBatchForm, current_user: AdminC
         task.progress = max(task.progress, 70)
     await task.save()
     return success([_work_order_out(order, True) for order in orders], msg="工单已完成" if form.printed else "工单已关联")
+
+
+async def update_task_work_order(form: H5WorkOrderUpdateForm, current_user: AdminCompatUser | None = None):
+    task = await AdminCompatPatrolTask.get_or_none(id=form.taskId)
+    if not task or (current_user and task.executor_id != current_user.id):
+        return fail(1, "巡查任务不存在")
+    order = await AdminCompatWorkOrder.get_or_none(
+        id=form.workOrderId,
+        task_id=task.id,
+        source=APP_WORK_ORDER_SOURCE,
+    )
+    if not order:
+        return fail(1, "工单不存在")
+    if order.status != "pending_report" or order.push_status == PRINTED_WORK_ORDER_STATUS:
+        return fail(1, "只有待处理工单可以修改")
+
+    title = form.title.strip()
+    description = form.description.strip()
+    if not title:
+        return fail(1, "请输入工单标题")
+    if not description:
+        return fail(1, "请输入工单描述")
+
+    now = datetime.now()
+    order.title = title
+    order.description = description
+    order.timeline = [
+        *(order.timeline or []),
+        {
+            "time": now.strftime("%m-%d %H:%M"),
+            "title": "H5编辑",
+            "desc": "移动端修改工单标题和描述",
+            "status": "待处理",
+            "color": "#f59e0b",
+        },
+    ]
+    await order.save()
+    return success(_work_order_out(order, True), msg="工单已更新")
 
 
 def _normalize_image_base64(value: str | None) -> str | None:
