@@ -429,6 +429,11 @@ async def start_task(form: H5TaskForm, current_user: AdminCompatUser | None = No
         return fail(1, "任务已完成，不能再次开始")
     if task.task_status == "running":
         return success(await _task_out(task, detail=True), msg="任务已在执行中")
+    start_time = task.start_time or task.plan_time
+    if start_time:
+        now = datetime.now(start_time.tzinfo) if start_time.tzinfo else datetime.now()
+        if now < start_time:
+            return fail(1, f"任务开始时间为{format_datetime(start_time)}，未到开始时间，暂不能开始巡查")
     if task.executor_id:
         running = await AdminCompatPatrolTask.filter(
             executor_id=task.executor_id,
