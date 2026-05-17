@@ -37,6 +37,8 @@ app = FastAPI(**ConfigClass.docs_config, lifespan=lifespan)
 if ConfigClass.static_server_enable:
     # 挂载本地 swagger 静态文件路径
     app.mount("/static", StaticFiles(directory="static"), name="static")
+    # H5 通过 Vite 的 /api 代理访问后端静态文件，避免移动端拿到 127.0.0.1 地址。
+    app.mount("/api/static", StaticFiles(directory="static"), name="api-static")
 
 
 # ✅ 注册统一无前缀的 API 路由

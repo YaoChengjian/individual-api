@@ -449,6 +449,11 @@ class H5WorkOrderUpdateForm(BaseModel):
     description: str = Field(..., min_length=1, max_length=300)
 
 
+class H5WorkOrderDeleteForm(BaseModel):
+    taskId: int
+    workOrderId: int
+
+
 class H5DictionaryQuery(BaseModel):
     dictCode: str
 

@@ -7,7 +7,7 @@ from jose import JWTError, jwt
 from tortoise.expressions import Q
 
 from app.api.admin_compat.constants import MAX_UPLOAD_MB, UPLOAD_SUFFIXES
-from app.api.admin_compat.helpers import build_page_payload, build_file_url, format_datetime, paginate_queryset
+from app.api.admin_compat.helpers import build_page_payload, format_datetime, paginate_queryset
 from app.api.admin_compat.models import (
     AdminCompatInspectionEvent,
     AdminCompatDictionary,
@@ -27,6 +27,7 @@ from app.api.admin_compat.schemas import (
     H5TaskForm,
     H5TaskQuery,
     H5WorkOrderBatchForm,
+    H5WorkOrderDeleteForm,
     H5WorkOrderUpdateForm,
 )
 from app.common.utils.jwt_utlis import ALGORITHM, SECRET_KEY, create_token, verify_password
@@ -164,6 +165,18 @@ async def _task_point_out(point: AdminCompatPatrolPoint) -> dict[str, Any]:
     }
 
 
+def _patrol_area_out(area: AdminCompatPatrolArea) -> dict[str, Any]:
+    return {
+        "areaId": area.id,
+        "areaCode": area.area_code,
+        "areaName": area.area_name,
+        "center": {"lat": area.center_lat, "lng": area.center_lng},
+        "boundary": area.boundary or [],
+        "sortNumber": area.sort_number,
+        "comments": area.comments,
+    }
+
+
 def _work_order_out(order: AdminCompatWorkOrder, selected: bool = False) -> dict[str, Any]:
     status = _meta(WORK_ORDER_STATUS_META, order.status)
     risk = _meta(RISK_META, order.risk_level)
@@ -263,6 +276,9 @@ async def _task_out(
         "createTime": format_datetime(task.create_time),
     }
     if detail:
+        area_ids = task.area_ids or []
+        areas = await AdminCompatPatrolArea.filter(id__in=area_ids).order_by("sort_number", "id") if area_ids else []
+        payload["areas"] = [_patrol_area_out(area) for area in areas]
         payload["points"] = [await _task_point_out(point) for point in points]
         payload["currentPoint"] = payload["points"][0] if payload["points"] else None
         payload["areaIds"] = task.area_ids or []
@@ -279,11 +295,15 @@ async def page_h5_tasks(params: H5TaskQuery, current_user: AdminCompatUser | Non
     type_names = await _dictionary_name_map("patrol_task_type")
     priority_names = await _dictionary_name_map("patrol_task_priority")
     repeat_rule_names = await _dictionary_name_map("patrol_task_repeat_rule")
-    total, tasks = await paginate_queryset(
-        _task_queryset(params, executor_id=current_user.id if current_user else None).order_by("-create_time"),
-        params.page,
-        params.limit,
+    queryset = _task_queryset(params, executor_id=current_user.id if current_user else None)
+    total = await queryset.count()
+    all_tasks = await queryset.order_by("-create_time").all()
+    sorted_tasks = sorted(
+        enumerate(all_tasks),
+        key=lambda item: (0 if item[1].task_status == "waiting" else 1, item[0]),
     )
+    start = (params.page - 1) * params.limit
+    tasks = [task for _, task in sorted_tasks[start : start + params.limit]]
     return success(
         build_page_payload(
             [
@@ -565,6 +585,23 @@ async def update_task_work_order(form: H5WorkOrderUpdateForm, current_user: Admi
     return success(_work_order_out(order, True), msg="工单已更新")
 
 
+async def delete_task_work_order(form: H5WorkOrderDeleteForm, current_user: AdminCompatUser | None = None):
+    task = await AdminCompatPatrolTask.get_or_none(id=form.taskId)
+    if not task or (current_user and task.executor_id != current_user.id):
+        return fail(1, "巡查任务不存在")
+    order = await AdminCompatWorkOrder.get_or_none(
+        id=form.workOrderId,
+        task_id=task.id,
+        source=APP_WORK_ORDER_SOURCE,
+    )
+    if not order:
+        return fail(1, "工单不存在")
+    if order.status != "pending_report" or order.push_status == PRINTED_WORK_ORDER_STATUS:
+        return fail(1, "只有待处理工单可以删除")
+    await order.delete()
+    return success({"workOrderId": form.workOrderId}, msg="工单已删除")
+
+
 def _normalize_image_base64(value: str | None) -> str | None:
     if not value:
         return None
@@ -658,16 +695,18 @@ async def upload_h5_print_file(file):
     if suffix and suffix not in UPLOAD_SUFFIXES:
         return fail(1, "不支持该文件类型")
 
-    save_info = await FileUtils.get_save_filepath(FileUtils.upload_dir, suffix or ".pdf")
+    save_info = await FileUtils.get_save_filepath("/h5-print", suffix or ".pdf")
     with open(save_info["save_path"], "wb") as target:
         shutil.copyfileobj(file.file, target)
 
     file_path = save_info["db_path"]
+    api_file_path = file_path.replace("/static/", "/api/static/", 1)
     return success(
         {
-            "path": file_path,
-            "filePath": file_path,
-            "url": build_file_url(file_path),
+            "path": api_file_path,
+            "filePath": api_file_path,
+            "url": api_file_path,
+            "storagePath": file_path,
             "fileName": file.filename,
             "length": file_size,
         }
