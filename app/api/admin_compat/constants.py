@@ -240,12 +240,31 @@ SEED_PATROL_AREAS = [
             {"lat": 23.18866, "lng": 113.27810},
         ],
     },
+    {
+        "area_code": "AREA_FY_COMMUNITY",
+        "area_name": "逢源社区",
+        "center_lat": 23.12455,
+        "center_lng": 113.24562,
+        "sort_number": 20,
+        "comments": "广州市荔湾区逢源社区演示巡查面",
+        "boundary": [
+            {"lat": 23.13004, "lng": 113.24002},
+            {"lat": 23.13018, "lng": 113.25236},
+            {"lat": 23.12524, "lng": 113.25318},
+            {"lat": 23.11872, "lng": 113.24922},
+            {"lat": 23.11838, "lng": 113.24072},
+            {"lat": 23.12442, "lng": 113.23892},
+        ],
+    },
 ]
 
 SEED_PATROL_POINTS = [
     {"area_code": "AREA_BYDDN", "point_code": "DEMO-01", "point_name": "巡查点01", "point_type": "key_point", "lat": 23.189511, "lng": 113.280523, "sort_number": 10},
     {"area_code": "AREA_BYDDN", "point_code": "DEMO-02", "point_name": "巡查点02", "point_type": "key_point", "lat": 23.188306, "lng": 113.279493, "sort_number": 20},
     {"area_code": "AREA_BYDDN", "point_code": "DEMO-03", "point_name": "巡查点03", "point_type": "key_point", "lat": 23.188677, "lng": 113.279451, "sort_number": 30},
+    {"area_code": "AREA_FY_COMMUNITY", "point_code": "FY-01", "point_name": "逢源社区巡查点01", "point_type": "key_point", "lat": 23.12862, "lng": 113.24462, "sort_number": 40},
+    {"area_code": "AREA_FY_COMMUNITY", "point_code": "FY-02", "point_name": "逢源社区巡查点02", "point_type": "key_point", "lat": 23.12392, "lng": 113.24728, "sort_number": 50},
+    {"area_code": "AREA_FY_COMMUNITY", "point_code": "FY-03", "point_name": "逢源社区巡查点03", "point_type": "key_point", "lat": 23.12046, "lng": 113.24316, "sort_number": 60},
 ]
 
 SEED_PATROL_USER_DEVICES = [

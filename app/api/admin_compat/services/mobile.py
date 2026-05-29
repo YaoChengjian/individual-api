@@ -200,6 +200,8 @@ def _work_order_out(order: AdminCompatWorkOrder, selected: bool = False) -> dict
         "reporterName": order.reporter_name,
         "locationName": order.location_name or order.point_name or order.area_name,
         "addressDetail": order.address_detail,
+        "pointName": order.point_name,
+        "areaName": order.area_name,
         "lat": order.lat,
         "lng": order.lng,
         "description": order.description,
@@ -738,6 +740,11 @@ async def app_push_work_orders(items: list[AppWorkOrderPushItem]):
             reporter = await AdminCompatUser.get_or_none(id=task.executor_id)
 
         point = await AdminCompatPatrolPoint.get_or_none(id=item.pointId) if item.pointId else None
+        area = await AdminCompatPatrolArea.get_or_none(id=point.area_id) if point else None
+        point_name = (point.point_name if point else item.pointName) or item.locationName or "智能巡查点位"
+        area_name = (area.area_name if area else "") or (task.patrol_location if task else "")
+        location_name = item.locationName or point_name or area_name
+        address_detail = item.addressDetail or area_name or point_name
         now = datetime.now()
         image_base64 = _extract_push_image(item)
         evidence_list = _build_app_evidence_list(item, image_base64)
@@ -757,9 +764,9 @@ async def app_push_work_orders(items: list[AppWorkOrderPushItem]):
             inspector_id=reporter.id if reporter else item.reporterId,
             inspector_name=(reporter.nickname if reporter else item.reporterName) or "App巡查员",
             area_id=point.area_id if point else None,
-            area_name="",
+            area_name=area_name,
             point_id=point.id if point else item.pointId,
-            point_name=(point.point_name if point else item.pointName) or item.locationName or "智能巡查点位",
+            point_name=point_name,
             lat=item.lat if item.lat is not None else (point.lat if point else 0),
             lng=item.lng if item.lng is not None else (point.lng if point else 0),
             confidence=item.confidence or 0,
@@ -778,13 +785,13 @@ async def app_push_work_orders(items: list[AppWorkOrderPushItem]):
             reporter_id=reporter.id if reporter else item.reporterId,
             reporter_name=(reporter.nickname if reporter else item.reporterName) or "App巡查员",
             area_id=point.area_id if point else None,
-            area_name="",
-            point_name=(point.point_name if point else item.pointName),
+            area_name=area_name,
+            point_name=point_name,
             event_id=event.id,
             task_id=task.id if task else None,
             point_record_id=None,
-            location_name=item.locationName or item.pointName,
-            address_detail=item.addressDetail,
+            location_name=location_name,
+            address_detail=address_detail,
             lat=item.lat if item.lat is not None else (point.lat if point else None),
             lng=item.lng if item.lng is not None else (point.lng if point else None),
             status="pending_report",
