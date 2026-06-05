@@ -536,10 +536,10 @@ async def _task_out(task: AdminCompatPatrolTask, detail: bool = False) -> dict[s
     points = await AdminCompatPatrolTaskPoint.filter(task_id=task.id).order_by("id")
     status = _meta(TASK_STATUS_META, task.task_status)
     task_type = _meta(TASK_TYPE_META, task.task_type)
-    work_order = await AdminCompatWorkOrder.get_or_none(task_id=task.id)
+    work_order = await AdminCompatWorkOrder.filter(task_id=task.id).order_by("-create_time", "-id").first()
     document = None
     if work_order:
-        document = await AdminCompatLawDocument.get_or_none(work_order_id=work_order.id)
+        document = await AdminCompatLawDocument.filter(work_order_id=work_order.id).order_by("-create_time", "-id").first()
     payload = {
         "taskId": task.id,
         "taskNo": task.task_code,
@@ -782,7 +782,7 @@ async def _flow_records(business_type: str, business_id: int) -> list[dict[str, 
 async def _build_work_order_detail(order: AdminCompatWorkOrder) -> dict[str, Any]:
     event = await AdminCompatInspectionEvent.get_or_none(id=order.event_id) if order.event_id else None
     task = await AdminCompatPatrolTask.get_or_none(id=order.task_id) if order.task_id else None
-    document = await AdminCompatLawDocument.get_or_none(work_order_id=order.id)
+    document = await AdminCompatLawDocument.filter(work_order_id=order.id).order_by("-create_time", "-id").first()
     push_records = await AdminCompatPushRecord.filter(work_order_id=order.id).order_by("-create_time")
     flows = await _flow_records("WORK_ORDER", order.id)
     if task:
@@ -1576,7 +1576,7 @@ async def generate_document(form: PatrolMvpDocumentForm):
         return fail(1, "工单不存在")
     if order.push_status != "PUSH_SUCCESS":
         return fail(1, "请先推送第三方平台成功后再生成文书")
-    document = await AdminCompatLawDocument.get_or_none(work_order_id=order.id)
+    document = await AdminCompatLawDocument.filter(work_order_id=order.id).order_by("-create_time", "-id").first()
     if not document:
         document_no = await _next_document_no()
         document = await AdminCompatLawDocument.create(
@@ -1630,7 +1630,7 @@ async def document_detail(form: PatrolMvpDocumentForm):
     elif form.documentNo:
         document = await AdminCompatLawDocument.get_or_none(document_code=form.documentNo)
     elif form.workOrderId:
-        document = await AdminCompatLawDocument.get_or_none(work_order_id=form.workOrderId)
+        document = await AdminCompatLawDocument.filter(work_order_id=form.workOrderId).order_by("-create_time", "-id").first()
     if not document:
         return fail(1, "文书不存在")
     return success(_document_out(document))
@@ -1739,7 +1739,7 @@ async def close_task(form: PatrolMvpTaskForm):
                 remark="点位闭环完成",
                 event_type="TASK_CLOSED",
             )
-    order = await AdminCompatWorkOrder.get_or_none(task_id=task.id)
+    order = await AdminCompatWorkOrder.filter(task_id=task.id).order_by("-create_time", "-id").first()
     if order and order.status != "CLOSED":
         old_status = order.status
         order.status = "CLOSED"
@@ -1764,6 +1764,7 @@ async def _ensure_report(task: AdminCompatPatrolTask):
     report = await AdminCompatInspectionReport.get_or_none(task_id=task.id)
     if report:
         return report
+    latest_order = await AdminCompatWorkOrder.filter(task_id=task.id).order_by("-create_time", "-id").first()
     order_count = await AdminCompatWorkOrder.filter(task_id=task.id).count()
     event_count = await AdminCompatInspectionEvent.filter(task_id=task.id).count()
     point_count = await AdminCompatPatrolTaskPoint.filter(task_id=task.id).count()
@@ -1775,7 +1776,7 @@ async def _ensure_report(task: AdminCompatPatrolTask):
         report_code=f"BG{_now().strftime('%Y%m%d%H%M%S')}",
         report_title=f"{task.task_title}闭环报告",
         task_id=task.id,
-        work_order_id=(await AdminCompatWorkOrder.get_or_none(task_id=task.id)).id if await AdminCompatWorkOrder.get_or_none(task_id=task.id) else None,
+        work_order_id=latest_order.id if latest_order else None,
         report_status="generated",
         closure_rate=100,
         point_count=point_count,

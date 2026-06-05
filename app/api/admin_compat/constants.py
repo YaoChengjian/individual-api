@@ -425,7 +425,7 @@ SEED_WORK_ORDERS = [
 SEED_INSPECTION_REPORTS = [
     {
         "report_code": "BG202605200001",
-        "report_title": "幸福里小区消防安全巡查闭环报告",
+        "report_title": "逢源社区消防安全巡查闭环报告",
         "task_code": "RWD20260515141720",
         "work_order_code": "XFS202605200001",
         "report_status": "generated",
@@ -434,13 +434,13 @@ SEED_INSPECTION_REPORTS = [
         "ai_detect_count": 12,
         "work_order_count": 1,
         "timeout_count": 0,
-        "summary": "本次巡查覆盖幸福里小区重点楼栋和消防通道，发现高风险隐患1处，工单已进入上报流程。",
+        "summary": "本次巡查覆盖逢源社区重点楼栋和消防通道，发现高风险隐患1处，工单已进入上报流程。",
         "generated_time": "2026-05-20 11:20:00",
         "archive_time": None,
     },
     {
         "report_code": "BG202605200002",
-        "report_title": "阳光花园社区环境巡查处置报告",
+        "report_title": "逢源社区环境巡查处置报告",
         "work_order_code": "XFS202605200002",
         "report_status": "generating",
         "closure_rate": 58.5,
@@ -448,7 +448,7 @@ SEED_INSPECTION_REPORTS = [
         "ai_detect_count": 4,
         "work_order_count": 1,
         "timeout_count": 0,
-        "summary": "阳光花园环境巡查发现垃圾满溢，责任队伍已受理并处置中。",
+        "summary": "逢源社区环境巡查发现垃圾满溢，责任队伍已受理并处置中。",
         "generated_time": "2026-05-20 11:40:00",
         "archive_time": None,
     },
